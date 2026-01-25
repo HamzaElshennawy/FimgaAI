@@ -1,0 +1,16 @@
+{
+    "name": "Gemini Design Generator",
+    "id": "gemini-design-generator",
+    "api": "1.0.0",
+    "main": "dist/code.js",
+    "ui": "src/ui.html",
+    "editorType": [
+        "figma"
+    ],
+    "networkAccess": {
+        "allowedDomains": [
+            "*"
+        ],
+        "reasoning": "This plugin requires network access to communicate with the Gemini API for generating design content."
+    }
+}
