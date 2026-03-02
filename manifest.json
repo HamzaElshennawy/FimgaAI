@@ -1,6 +1,6 @@
 {
-    "name": "Gemini Design Generator",
-    "id": "gemini-design-generator",
+    "name": "AI4Figma",
+    "id": "1600856690709906638",
     "api": "1.0.0",
     "main": "dist/code.js",
     "ui": "src/ui.html",
@@ -12,5 +12,6 @@
             "*"
         ],
         "reasoning": "This plugin requires network access to communicate with the Gemini API for generating design content."
-    }
+    },
+    "documentAccess": "dynamic-page"
 }

@@ -1,7 +1,7 @@
 {
-    "name": "gemini-figma-plugin",
+    "name": "ai4figma",
     "version": "1.0.0",
-    "description": "A Figma plugin that uses Gemini API to generate designs.",
+    "description": "AI4Figma: Turn text prompts into editable Auto Layout designs with Gemini.",
     "main": "dist/code.js",
     "scripts": {
         "build": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es6",
