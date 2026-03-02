@@ -274,22 +274,53 @@ const buildReusableComponents = (root: FrameNode) => {
         }
     }
 
+    const uniqueVariantNames = (base: string, seen: Set<string>) => {
+        let name = base || "Default";
+        let i = 2;
+        while (seen.has(name)) {
+            name = `${base || "Default"} ${i}`;
+            i += 1;
+        }
+        seen.add(name);
+        return name;
+    };
+
+    const getUniqueNodeName = (base: string) => {
+        let name = base;
+        let i = 2;
+        const exists = () =>
+            !!figma.currentPage.findOne(
+                (n) => "name" in n && (n as SceneNode).name === name,
+            );
+        while (exists()) {
+            name = `${base} ${i}`;
+            i += 1;
+        }
+        return name;
+    };
+
     for (const [group, comps] of byGroup.entries()) {
         if (!comps.length) continue;
         if (comps.length === 1) {
             comps[0].name = `${group}/Default`;
             continue;
         }
+
+        const seen = new Set<string>();
+        for (const comp of comps) {
+            const raw = comp.name.split("/")[1] || "Default";
+            const unique = uniqueVariantNames(raw, seen);
+            comp.name = `${group}/${unique}`;
+        }
+
         try {
             const set = figma.combineAsVariants(comps, figma.currentPage);
-            set.name = `${group}`;
-            set.variantGroupProperties = {
-                Type: {
-                    values: comps.map((c) => c.name.split("/")[1] || "Default"),
-                },
-            } as any;
+            set.name = getUniqueNodeName(`${group}`);
         } catch {
-            // if combine fails, keep individual components
+            // If variant combination fails, keep unique component names.
+            for (const comp of comps) {
+                comp.name = getUniqueNodeName(comp.name);
+            }
         }
     }
 };

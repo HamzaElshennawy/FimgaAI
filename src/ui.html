@@ -540,6 +540,70 @@
                 line-height: 1.4;
             }
 
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(3, 8, 15, 0.72);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 30;
+            }
+
+            .modal-card {
+                width: min(92vw, 760px);
+                max-height: 84vh;
+                background: #111a2a;
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .modal-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .modal-title {
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .modal-body {
+                padding: 10px 12px;
+                overflow: auto;
+            }
+
+            .modal-json {
+                width: 100%;
+                min-height: 320px;
+                max-height: 58vh;
+                resize: vertical;
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
+                background: #0b1422;
+                color: #d8e7ff;
+                font-family: "Consolas", "SFMono-Regular", monospace;
+                font-size: 12px;
+                line-height: 1.45;
+                padding: 10px;
+                box-sizing: border-box;
+            }
+
+            .modal-actions {
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                padding: 10px 12px;
+                border-top: 1px solid var(--border-color);
+            }
+
             .color-grid {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1317,6 +1381,39 @@
             </div>
         </div>
 
+        <div
+            class="modal-overlay"
+            id="handoffModal"
+        >
+            <div class="modal-card">
+                <div class="modal-head">
+                    <div class="modal-title">Handoff JSON</div>
+                    <button
+                        id="closeHandoffModalBtn"
+                        class="secondary"
+                        style="height: 30px; padding: 0 10px"
+                    >
+                        Close
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <textarea
+                        id="handoffJsonOutput"
+                        class="modal-json"
+                    ></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button
+                        id="copyHandoffBtn"
+                        class="secondary"
+                    >
+                        Copy JSON
+                    </button>
+                    <button id="downloadHandoffBtn">Download JSON</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Tab -->
         <div
             id="tab-settings"
@@ -1425,6 +1522,15 @@
             const flowLinksCheckbox = document.getElementById("flowLinksCheckbox");
             const qaPanel = document.getElementById("qaPanel");
             const qaList = document.getElementById("qaList");
+            const handoffModal = document.getElementById("handoffModal");
+            const handoffJsonOutput =
+                document.getElementById("handoffJsonOutput");
+            const closeHandoffModalBtn = document.getElementById(
+                "closeHandoffModalBtn",
+            );
+            const copyHandoffBtn = document.getElementById("copyHandoffBtn");
+            const downloadHandoffBtn =
+                document.getElementById("downloadHandoffBtn");
 
             let selectedImageData = null; // Reference Image
             let selectedContextTrees = []; // Context JSON list
@@ -1432,6 +1538,7 @@
             let loadingInterval = null;
             let lastGeneratedDesignData = null;
             let lastGeneratedMeta = null;
+            let lastHandoffPayload = "";
 
             const promptPresets = {
                 landing:
@@ -2491,18 +2598,45 @@
                     },
                 };
                 const payload = JSON.stringify(handoff, null, 2);
+                lastHandoffPayload = payload;
+                if (handoffJsonOutput) handoffJsonOutput.value = payload;
+                if (handoffModal) handoffModal.style.display = "flex";
+            };
 
+            closeHandoffModalBtn.onclick = () => {
+                if (handoffModal) handoffModal.style.display = "none";
+            };
+
+            handoffModal.onclick = (e) => {
+                if (e.target === handoffModal) {
+                    handoffModal.style.display = "none";
+                }
+            };
+
+            copyHandoffBtn.onclick = async () => {
+                const payload = handoffJsonOutput?.value || lastHandoffPayload;
+                if (!payload) return;
                 try {
                     await navigator.clipboard.writeText(payload);
-                    exportSpecBtn.textContent = "Copied";
-                    setTimeout(
-                        () => (exportSpecBtn.textContent = "Export Handoff Spec"),
-                        1200,
-                    );
+                    copyHandoffBtn.textContent = "Copied";
+                    setTimeout(() => (copyHandoffBtn.textContent = "Copy JSON"), 1200);
                 } catch {
-                    console.log(payload);
-                    alert("Clipboard blocked. Spec logged to console.");
+                    alert("Clipboard blocked. Copy manually from the modal.");
                 }
+            };
+
+            downloadHandoffBtn.onclick = () => {
+                const payload = handoffJsonOutput?.value || lastHandoffPayload;
+                if (!payload) return;
+                const blob = new Blob([payload], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "handoff-spec.json";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
             };
 
             window.onmessage = async (event) => {
